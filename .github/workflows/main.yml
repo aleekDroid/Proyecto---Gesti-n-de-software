@@ -22,16 +22,16 @@ jobs:
       - name: Instalar dependencias
         run: npm install
 
-      - name: Ejecutar pruebas
+      - name: Ejecutar pruebas con cobertura
         run: npm run test
 
-      - name: Iniciar sesión en Docker
+      - name: Iniciar sesión en Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PAT }}
 
-      - name: Subir a Docker Hub
+      - name: Compilar y publicar imagen Docker
         uses: docker/build-push-action@v4
         with:
           context: .
@@ -39,3 +39,26 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/proyecto-api:latest
             ${{ secrets.DOCKER_USERNAME }}/proyecto-api:${{ github.sha }}
+
+  desplegar:
+    needs: construir-y-probar
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Desplegar en AWS EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # 1. Descargar la versión más reciente desde Docker Hub
+            docker pull ${{ secrets.DOCKER_USERNAME }}/proyecto-api:latest
+
+            # 2. Detener y remover contenedor antiguo si existe
+            docker stop mi-api || true
+            docker rm mi-api || true
+
+            # 3. Levantar la nueva versión mapeada en el puerto 80
+            docker run -d --name mi-api -p 80:3000 --restart always ${{ secrets.DOCKER_USERNAME }}/proyecto-api:latest
