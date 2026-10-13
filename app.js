@@ -7,7 +7,7 @@ let users = [{ id: 1, name: 'Aleek' }];
 
 // 1. Health check (para saber si la API está viva)
 app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'OK' });
+    res.status(200).json({ status: 'OKs' });
 });
 
 // 2. Obtener todos los usuarios
