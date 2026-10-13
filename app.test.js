@@ -8,7 +8,7 @@ describe('Pruebas de la API REST', () => {
     it('Debe responder OK en /api/health', async () => {
         const res = await request(app).get('/api/health');
         expect(res.statusCode).toBe(200);
-        expect(res.body.status).toBe('OK');
+        expect(res.body.status).toBe('OKs');
     });
 
     // Prueba 2: Revisa que devuelva usuarios.
